@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -16,6 +17,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -25,6 +27,8 @@ import org.opencv.android.OpenCVLoader;
 import com.example.caleb.buildingdetector.CameraSupport;
 
 import java.io.IOException;
+
+import static com.example.caleb.buildingdetector.R.layout.content_main;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private MenuItem mItemSnapshot;
 
     private Bitmap mBitmap;
+
+    private ImageView mImageView;
 
     private BaseLoaderCallback mOpenCVCallBack = new BaseLoaderCallback(this) {
         @Override
@@ -53,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
                     fileUri = CameraSupport.getOutputMediaFileUri(CameraSupport.MEDIA_TYPE_IMAGE);
-                    //intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
 
                     startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
                 } break;
@@ -86,29 +92,24 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate");
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+//        mImageView = (ImageView) findViewById(R.id.imageView);
+
+        Log.d(TAG, "Load OpenCV Library");
+        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mOpenCVCallBack)) {
+            Log.e(TAG, "Failed to load OpenCV library");
+        }
+//        setContentView(content_main);
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
+
+
     }
 
     @Override
     protected void onResume() {
         Log.d(TAG, "onResume");
         super.onResume();
-
-        Log.d(TAG, "Load OpenCV Library");
-        if(!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0,this,mOpenCVCallBack)){
-            Log.e(TAG, "Failed to load OpenCV library");
-        }
     }
 
     @Override
@@ -152,8 +153,19 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Image saved to:\n" +
                         fileUri, Toast.LENGTH_LONG).show();
 
+                setContentView(R.layout.content_main);
+
+                mImageView = (ImageView) findViewById(R.id.imageView);
+
                 try {
-                    Bitmap mBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), fileUri);
+                    // Get image bitmap
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.outHeight = mImageView.getHeight();
+                    options.outWidth = mImageView.getWidth();
+                    Bitmap mBitmap = BitmapFactory.decodeStream(this.getContentResolver().openInputStream(fileUri), null, options);
+
+                    //Write Image to screen
+                    mImageView.setImageBitmap(mBitmap);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -163,9 +175,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 // Image capture failed, advise user
             }
-        }
-
-        if (requestCode == CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE) {
+        } else if (requestCode == CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 // Video captured and saved to fileUri specified in the Intent
                 Toast.makeText(this, "Video saved to:\n" +
