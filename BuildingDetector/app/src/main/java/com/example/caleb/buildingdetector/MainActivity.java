@@ -23,6 +23,9 @@ import android.widget.Toast;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import com.example.caleb.buildingdetector.CameraSupport;
 
@@ -41,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private MenuItem mItemSnapshot;
 
     private Bitmap mBitmap;
+    private Mat mMat;
 
     private ImageView mImageView;
 
@@ -93,13 +97,11 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
 
-//        mImageView = (ImageView) findViewById(R.id.imageView);
-
         Log.d(TAG, "Load OpenCV Library");
         if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mOpenCVCallBack)) {
             Log.e(TAG, "Failed to load OpenCV library");
         }
-//        setContentView(content_main);
+
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
 
@@ -160,12 +162,21 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     // Get image bitmap
                     BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.outHeight = mImageView.getHeight();
-                    options.outWidth = mImageView.getWidth();
+//                    options.outHeight = mImageView.getHeight();
+//                    options.outWidth = mImageView.getWidth();
                     Bitmap mBitmap = BitmapFactory.decodeStream(this.getContentResolver().openInputStream(fileUri), null, options);
 
+                    mMat = new Mat();
+
+                    Utils.bitmapToMat(mBitmap, mMat);
+
+                    Mat newMat = new Mat();
+                    org.opencv.imgproc.Imgproc.cvtColor(mMat, newMat, Imgproc.COLOR_YUV420p2GRAY);
+
+                    Bitmap newBitmap = Bitmap.createBitmap(newMat.width(), newMat.height(), Bitmap.Config.ARGB_8888);
+                    Utils.matToBitmap(newMat, newBitmap);
                     //Write Image to screen
-                    mImageView.setImageBitmap(mBitmap);
+                    mImageView.setImageBitmap(newBitmap);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
