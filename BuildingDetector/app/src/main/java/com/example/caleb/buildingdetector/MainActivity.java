@@ -25,6 +25,9 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import com.example.caleb.buildingdetector.CameraSupport;
@@ -45,6 +48,9 @@ public class MainActivity extends AppCompatActivity {
 
     private Bitmap mBitmap;
     private Mat mMat;
+    private Features2d mFeatures2d;
+    private FeatureDetector mFeatureDetector;
+    private MatOfKeyPoint mMatofKeyPoint;
 
     private ImageView mImageView;
 
@@ -55,9 +61,6 @@ public class MainActivity extends AppCompatActivity {
                 case LoaderCallbackInterface.SUCCESS:
                 {
                     Log.d(TAG, "OpenCV loaded Successfully");
-
-                    //Load Library
-                    System.loadLibrary("opencv_java3");
 
                     // Creating Camera intent
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -98,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         Log.d(TAG, "Load OpenCV Library");
-        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mOpenCVCallBack)) {
+        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_8, this, mOpenCVCallBack)) {
             Log.e(TAG, "Failed to load OpenCV library");
         }
 
@@ -175,10 +178,18 @@ public class MainActivity extends AppCompatActivity {
                     Mat newMat = new Mat();
                     org.opencv.imgproc.Imgproc.cvtColor(mMat, newMat, Imgproc.COLOR_BGR2GRAY);
 
+                    mFeatureDetector = FeatureDetector.create(FeatureDetector.STAR);
+
+                    mMatofKeyPoint = new MatOfKeyPoint();
+
+                    mFeatureDetector.detect(newMat, mMatofKeyPoint);
+
+                    /**   Testing code **/
                     Bitmap newBitmap = Bitmap.createBitmap(newMat.width(), newMat.height(), Bitmap.Config.ARGB_8888);
                     Utils.matToBitmap(newMat, newBitmap);
                     //Write Image to screen
                     mImageView.setImageBitmap(newBitmap);
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
