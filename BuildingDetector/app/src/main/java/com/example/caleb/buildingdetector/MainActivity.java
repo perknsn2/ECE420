@@ -164,6 +164,8 @@ public class MainActivity extends AppCompatActivity {
                     BitmapFactory.Options options = new BitmapFactory.Options();
 //                    options.outHeight = mImageView.getHeight();
 //                    options.outWidth = mImageView.getWidth();
+
+                    //Bitmap is type ARGB_8888
                     Bitmap mBitmap = BitmapFactory.decodeStream(this.getContentResolver().openInputStream(fileUri), null, options);
 
                     mMat = new Mat();
@@ -171,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                     Utils.bitmapToMat(mBitmap, mMat);
 
                     Mat newMat = new Mat();
-                    org.opencv.imgproc.Imgproc.cvtColor(mMat, newMat, Imgproc.COLOR_YUV420p2GRAY);
+                    org.opencv.imgproc.Imgproc.cvtColor(mMat, newMat, Imgproc.COLOR_BGR2GRAY);
 
                     Bitmap newBitmap = Bitmap.createBitmap(newMat.width(), newMat.height(), Bitmap.Config.ARGB_8888);
                     Utils.matToBitmap(newMat, newBitmap);
