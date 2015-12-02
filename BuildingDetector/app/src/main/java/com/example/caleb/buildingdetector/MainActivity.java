@@ -24,6 +24,8 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.DMatch;
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
@@ -39,6 +41,7 @@ import com.example.caleb.buildingdetector.CameraSupport;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import static com.example.caleb.buildingdetector.R.layout.content_main;
 
@@ -209,11 +212,36 @@ public class MainActivity extends AppCompatActivity {
                     MatOfDMatch imgMatches = new MatOfDMatch();
                     siftMatcher.match(imgDesc, dbImgDesc, imgMatches);
 
+//                    List<DMatch> matchList = imgMatches.toList();
+//                    float average = 0;
+//                    for(int i = 0; i<matchList.size(); i++)
+//                    {
+//                        average += matchList.get(i).distance;
+//                    }
+//                    average /= matchList.size();
+//                    int numGoodMatch = 0;
+//                    for(int i = 0; i<matchList.size(); i++)
+//                    {
+//                        if(matchList.get(i).distance < average)
+//                            numGoodMatch++;
+//                    }
+//                    List<KeyPoint> dbImgKeyList = dbKeypoints.toList();
+//                    List<KeyPoint> imgKeyList = mMatofKeyPoint.toList();
+
+//                    double numDbKeys = (double)dbImgKeyList.size();
+//                    double numImgKeys = (double)imgKeyList.size();
+
                     Mat outImg = new Mat();
                     Scalar blue = new Scalar(0,0,255);
                     Scalar green = new Scalar(0,255,0);
                     MatOfByte matchMask = new MatOfByte();
-                    Features2d.drawMatches(newMat, mMatofKeyPoint, dbBwMat, dbKeypoints, imgMatches, outImg, blue, green, matchMask, 0);
+//                    if(((double)numGoodMatch/numDbKeys > 0.35) || ((double)numGoodMatch/numImgKeys > 0.35))
+                        Features2d.drawMatches(newMat, mMatofKeyPoint, dbBwMat, dbKeypoints, imgMatches, outImg, blue, green, matchMask, 0);
+//                    else
+//                    {
+//                        MatOfDMatch noMatch = new MatOfDMatch();
+//                        Features2d.drawMatches(newMat, mMatofKeyPoint, dbBwMat, dbKeypoints, noMatch, outImg, blue, green, matchMask, 0);
+//                    }
 //                    Features2d.drawKeypoints(dbBwMat,dbKeypoints,outImg, blue, 0);
 
                     /**   Testing code **/
