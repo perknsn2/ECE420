@@ -25,13 +25,19 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Scalar;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import com.example.caleb.buildingdetector.CameraSupport;
 
+import java.io.File;
 import java.io.IOException;
 
 import static com.example.caleb.buildingdetector.R.layout.content_main;
@@ -155,8 +161,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 // Image captured and saved to fileUri specified in the Intent
-                Toast.makeText(this, "Image saved to:\n" +
-                        fileUri, Toast.LENGTH_LONG).show();
+//                Toast.makeText(this, "Image saved to:\n" +
+//                        fileUri, Toast.LENGTH_LONG).show();
 
                 setContentView(R.layout.content_main);
 
@@ -170,25 +176,54 @@ public class MainActivity extends AppCompatActivity {
 
                     //Bitmap is type ARGB_8888
                     Bitmap mBitmap = BitmapFactory.decodeStream(this.getContentResolver().openInputStream(fileUri), null, options);
+                    Bitmap dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.oscilloscope);
 
                     mMat = new Mat();
+                    Mat dbImgMat = new Mat();
 
                     Utils.bitmapToMat(mBitmap, mMat);
+                    Utils.bitmapToMat(dbImgBitmap, dbImgMat);
 
                     Mat newMat = new Mat();
                     org.opencv.imgproc.Imgproc.cvtColor(mMat, newMat, Imgproc.COLOR_BGR2GRAY);
+                    Mat dbBwMat = new Mat();
+                    org.opencv.imgproc.Imgproc.cvtColor(dbImgMat, dbBwMat, Imgproc.COLOR_BGR2GRAY);
 
-                    mFeatureDetector = FeatureDetector.create(FeatureDetector.STAR);
+                    mFeatureDetector = FeatureDetector.create(FeatureDetector.ORB);
 
                     mMatofKeyPoint = new MatOfKeyPoint();
+                    MatOfKeyPoint dbKeypoints = new MatOfKeyPoint();
 
                     mFeatureDetector.detect(newMat, mMatofKeyPoint);
+                    mFeatureDetector.detect(dbBwMat, dbKeypoints);
+
+                    Mat imgDesc = new Mat();
+                    Mat dbImgDesc = new Mat();
+
+                    DescriptorExtractor siftExtractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+                    siftExtractor.compute(newMat, mMatofKeyPoint, imgDesc);
+                    siftExtractor.compute(dbBwMat, dbKeypoints, dbImgDesc);
+
+                    DescriptorMatcher siftMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_L1);
+
+                    MatOfDMatch imgMatches = new MatOfDMatch();
+                    siftMatcher.match(imgDesc, dbImgDesc, imgMatches);
+
+                    Mat outImg = new Mat();
+                    Scalar blue = new Scalar(0,0,255);
+                    Scalar green = new Scalar(0,255,0);
+                    MatOfByte matchMask = new MatOfByte();
+                    Features2d.drawMatches(newMat, mMatofKeyPoint, dbBwMat, dbKeypoints, imgMatches, outImg, blue, green, matchMask, 0);
+//                    Features2d.drawKeypoints(dbBwMat,dbKeypoints,outImg, blue, 0);
 
                     /**   Testing code **/
-                    Bitmap newBitmap = Bitmap.createBitmap(newMat.width(), newMat.height(), Bitmap.Config.ARGB_8888);
-                    Utils.matToBitmap(newMat, newBitmap);
+//                    Bitmap newBitmap = Bitmap.createBitmap(newMat.width(), newMat.height(), Bitmap.Config.ARGB_8888);
+                    Bitmap newBitmap = Bitmap.createBitmap(outImg.width(), outImg.height(), Bitmap.Config.ARGB_8888);
+//                    Utils.matToBitmap(newMat, newBitmap);
+                    Utils.matToBitmap(outImg, newBitmap);
                     //Write Image to screen
                     mImageView.setImageBitmap(newBitmap);
+//                    mImageView.setImageBitmap(dbImgBitmap);
 
                 } catch (IOException e) {
                     e.printStackTrace();
