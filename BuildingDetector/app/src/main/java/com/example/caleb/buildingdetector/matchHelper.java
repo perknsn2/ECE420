@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Created by Tori on 12/4/2015.
  */
-public class matchHelp
+public class matchHelper
 {
     public static float average(MatOfDMatch matches)
     {

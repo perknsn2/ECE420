@@ -10,6 +10,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Mat> mDescriptorList;
     private ImageView mImageView;
     private TextView mTextView;
+    private Button mCameraButton;
 
 //    private BaseLoaderCallback mOpenCVCallBack = new BaseLoaderCallback(this) {
 //        @Override
@@ -208,6 +211,18 @@ public class MainActivity extends AppCompatActivity {
 
                 mImageView = (ImageView) findViewById(R.id.imageView);
                 mTextView = (TextView) findViewById(R.id.imageDescription);
+                mCameraButton = (Button) findViewById(R.id.Camera);
+                mCameraButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+                        fileUri = CameraSupport.getOutputMediaFileUri(CameraSupport.MEDIA_TYPE_IMAGE);
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+
+                        startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                    }
+                });
 
                 try {
                     // Get image bitmap
@@ -242,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
                         float avgSizeOfMatches = 0;
                         MatOfDMatch curMatch = new MatOfDMatch();
                         mDescriptorMatcher.match(imgDesc, mDescriptorList.get(i), curMatch);
-                        avgSizeOfMatches = matchHelp.average(curMatch);
+                        avgSizeOfMatches = matchHelper.average(curMatch);
                         if (avgSizeOfMatches <= avgMinSizeofMatches) {
                             avgMinSizeofMatches = avgSizeOfMatches;
                             bestMatchIdx = i;
@@ -316,8 +331,8 @@ public class MainActivity extends AppCompatActivity {
                         List<DMatch> neighbors = threshMatch.get(i).toList();
                         if(neighbors.size()>=2)
                         {
-                            if((neighbors.get(0).distance/neighbors.get(1).distance < 0.8) ||
-                                    (neighbors.get(1).distance/neighbors.get(0).distance < 0.8))
+                            if((neighbors.get(0).distance/neighbors.get(1).distance < 0.75) ||
+                                    (neighbors.get(1).distance/neighbors.get(0).distance < 0.75))
                             {
                                 goodMatch++;
                             }
@@ -328,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
                     Scalar blue = new Scalar(0,0,255);
                     Scalar green = new Scalar(0,255,0);
                     MatOfByte matchMask = new MatOfByte();
-                    if(((float)goodMatch/(float)numMatch) > 0.35) {
+                    if(goodMatch > 15) {
                         Features2d.drawMatches(newMat, mMatofKeyPoint, grayImgMat, dbKeypoints, bestMatch, outImg, blue, green, matchMask, 0);
                         mTextView.setText(imageDescription);
                     }
