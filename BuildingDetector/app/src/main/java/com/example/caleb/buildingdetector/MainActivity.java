@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.opencv.android.Utils;
+import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
@@ -234,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
                     siftExtractor.compute(newMat, mMatofKeyPoint, imgDesc);
 
                     int bestMatchIdx = -1;
+                    Mat bestMatchDesc = new Mat();
                     MatOfDMatch bestMatch = new MatOfDMatch();
                     float avgMinSizeofMatches = Float.MAX_VALUE;
                     for (int i = 0; i < mDescriptorList.size(); i++) {
@@ -245,15 +247,10 @@ public class MainActivity extends AppCompatActivity {
                             avgMinSizeofMatches = avgSizeOfMatches;
                             bestMatchIdx = i;
                             bestMatch = curMatch;           //holds matches of best matched image
+                            bestMatchDesc = mDescriptorList.get(i);
                         }
                     }
 
-                    if (avgMinSizeofMatches > 1300)
-                    {
-                        bestMatchIdx = -1;
-                        Toast.makeText(this, "No match found", Toast.LENGTH_LONG).show();
-                        return;
-                    }
 
 //                    List<DMatch> matchList = imgMatches.toList();
 //                    float average = 0;
@@ -302,7 +299,6 @@ public class MainActivity extends AppCompatActivity {
                         imageDescription += "mouse";
                     }
 
-                    mTextView.setText(imageDescription);
                     Utils.bitmapToMat(dbImgBitmap, imgMat);
 
                     Mat grayImgMat = new Mat();
@@ -310,18 +306,37 @@ public class MainActivity extends AppCompatActivity {
 
                     MatOfKeyPoint dbKeypoints = new MatOfKeyPoint();
                     mFeatureDetector.detect(grayImgMat, dbKeypoints);
+                    List<MatOfDMatch> threshMatch = new ArrayList<MatOfDMatch>();
+
+                    mDescriptorMatcher.knnMatch(imgDesc, bestMatchDesc, threshMatch, 2);
+                    int numMatch = threshMatch.size();
+                    int goodMatch = 0;
+                    for(int i = 0; i<numMatch; i++)
+                    {
+                        List<DMatch> neighbors = threshMatch.get(i).toList();
+                        if(neighbors.size()>=2)
+                        {
+                            if((neighbors.get(0).distance/neighbors.get(1).distance < 0.8) ||
+                                    (neighbors.get(1).distance/neighbors.get(0).distance < 0.8))
+                            {
+                                goodMatch++;
+                            }
+                        }
+                    }
 
                     Mat outImg = new Mat();
                     Scalar blue = new Scalar(0,0,255);
                     Scalar green = new Scalar(0,255,0);
                     MatOfByte matchMask = new MatOfByte();
-//                    if(((double)numGoodMatch/numDbKeys > 0.35) || ((double)numGoodMatch/numImgKeys > 0.35))
-                    Features2d.drawMatches(newMat, mMatofKeyPoint, grayImgMat, dbKeypoints, bestMatch, outImg, blue, green, matchMask, 0);
-//                    else
-//                    {
-//                        MatOfDMatch noMatch = new MatOfDMatch();
-//                        Features2d.drawMatches(newMat, mMatofKeyPoint, dbBwMat, dbKeypoints, noMatch, outImg, blue, green, matchMask, 0);
-//                    }
+                    if(((float)goodMatch/(float)numMatch) > 0.35) {
+                        Features2d.drawMatches(newMat, mMatofKeyPoint, grayImgMat, dbKeypoints, bestMatch, outImg, blue, green, matchMask, 0);
+                        mTextView.setText(imageDescription);
+                    }
+                    else
+                    {
+                        Features2d.drawKeypoints(newMat, mMatofKeyPoint, outImg);
+                    }
+
 //                    Features2d.drawKeypoints(dbBwMat,dbKeypoints,outImg, blue, 0);
 
                     /**   Testing code **/
