@@ -212,36 +212,43 @@ public class MainActivity extends AppCompatActivity {
                     MatOfDMatch imgMatches = new MatOfDMatch();
                     siftMatcher.match(imgDesc, dbImgDesc, imgMatches);
 
-//                    List<DMatch> matchList = imgMatches.toList();
-//                    float average = 0;
-//                    for(int i = 0; i<matchList.size(); i++)
-//                    {
-//                        average += matchList.get(i).distance;
-//                    }
-//                    average /= matchList.size();
-//                    int numGoodMatch = 0;
-//                    for(int i = 0; i<matchList.size(); i++)
-//                    {
-//                        if(matchList.get(i).distance < average)
-//                            numGoodMatch++;
-//                    }
-//                    List<KeyPoint> dbImgKeyList = dbKeypoints.toList();
-//                    List<KeyPoint> imgKeyList = mMatofKeyPoint.toList();
+                    List<DMatch> matchList = imgMatches.toList();
+                    float average = 0;
+                    float min = matchList.get(0).distance;
+                    float max = min;
+                    for(int i = 0; i<matchList.size(); i++)
+                    {
+                        float dist = matchList.get(i).distance;
+                        if(dist<min)
+                            min = dist;
+                        else if(dist>max)
+                            max = dist;
+                        average += dist;
+                    }
+                    average /= matchList.size();
+                    int numGoodMatch = 0;
+                    for(int i = 0; i<matchList.size(); i++)
+                    {
+                        if(matchList.get(i).distance < (min + 0.85*(average-min)))
+                            numGoodMatch++;
+                    }
+                    List<KeyPoint> dbImgKeyList = dbKeypoints.toList();
+                    List<KeyPoint> imgKeyList = mMatofKeyPoint.toList();
 
-//                    double numDbKeys = (double)dbImgKeyList.size();
-//                    double numImgKeys = (double)imgKeyList.size();
+                    double numDbKeys = (double)dbImgKeyList.size();
+                    double numImgKeys = (double)imgKeyList.size();
 
                     Mat outImg = new Mat();
                     Scalar blue = new Scalar(0,0,255);
                     Scalar green = new Scalar(0,255,0);
                     MatOfByte matchMask = new MatOfByte();
-//                    if(((double)numGoodMatch/numDbKeys > 0.35) || ((double)numGoodMatch/numImgKeys > 0.35))
+                    if(((double)numGoodMatch/numDbKeys > 0.35) || ((double)numGoodMatch/numImgKeys > 0.35))
                         Features2d.drawMatches(newMat, mMatofKeyPoint, dbBwMat, dbKeypoints, imgMatches, outImg, blue, green, matchMask, 0);
-//                    else
-//                    {
-//                        MatOfDMatch noMatch = new MatOfDMatch();
-//                        Features2d.drawMatches(newMat, mMatofKeyPoint, dbBwMat, dbKeypoints, noMatch, outImg, blue, green, matchMask, 0);
-//                    }
+                    else
+                    {
+                        MatOfDMatch noMatch = new MatOfDMatch();
+                        Features2d.drawMatches(newMat, mMatofKeyPoint, dbBwMat, dbKeypoints, noMatch, outImg, blue, green, matchMask, 0);
+                    }
 //                    Features2d.drawKeypoints(dbBwMat,dbKeypoints,outImg, blue, 0);
 
                     /**   Testing code **/
