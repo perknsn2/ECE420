@@ -57,41 +57,48 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mImageView;
     private TextView mTextView;
     private Button mCameraButton;
+    private int mHeight;
+    private int mWidth;
 
-//    private BaseLoaderCallback mOpenCVCallBack = new BaseLoaderCallback(this) {
-//        @Override
-//        public void onManagerConnected(int status) {
-//            switch (status){
-//                case LoaderCallbackInterface.SUCCESS:
-//                {
-//                    Log.d(TAG, "OpenCV loaded Successfully");
-//
-//                    dbImgMat = new Mat();
-//                } break;
-//
-//                case LoaderCallbackInterface.MARKET_ERROR:
-//                {
-//                    Log.d(TAG, "Google Play service is not accessible");
-//                    AlertDialog MarketErrorMessage = new AlertDialog.Builder(mAppContext).create();
-//                    MarketErrorMessage.setTitle("OpenCV Manager");
-//                    MarketErrorMessage.setMessage("Google Play service is not accessible!");
-//                    MarketErrorMessage.setCancelable(false);
-//                    MarketErrorMessage.setButton(AlertDialog.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface dialog, int which) {
-//                            ((Activity) mAppContext).finish();
-//                        }
-//                    });
-//                    MarketErrorMessage.show();
-//                } break;
-//
-//                default:
-//                {
-//                    super.onManagerConnected(status);
-//                } break;
-//            }
-//        }
-//    };
+/*    private BaseLoaderCallback mOpenCVCallBack = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status){
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    Log.d(TAG, "OpenCV loaded Successfully");
+
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+                    fileUri = CameraSupport.getOutputMediaFileUri(CameraSupport.MEDIA_TYPE_IMAGE);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+
+                    startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                } break;
+
+                case LoaderCallbackInterface.MARKET_ERROR:
+                {
+                    Log.d(TAG, "Google Play service is not accessible");
+                    AlertDialog MarketErrorMessage = new AlertDialog.Builder(mAppContext).create();
+                    MarketErrorMessage.setTitle("OpenCV Manager");
+                    MarketErrorMessage.setMessage("Google Play service is not accessible!");
+                    MarketErrorMessage.setCancelable(false);
+                    MarketErrorMessage.setButton(AlertDialog.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ((Activity) mAppContext).finish();
+                        }
+                    });
+                    MarketErrorMessage.show();
+                } break;
+
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,12 +110,12 @@ public class MainActivity extends AppCompatActivity {
          * loading.  Not sure which is better... wait. If open cv isn't installed this may cause a
          * problem. Not worth checking out now though.
          */
-//        Log.d(TAG, "Load OpenCV Library");
-//        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_8, this, mOpenCVCallBack)) {
-//            Log.e(TAG, "Failed to load OpenCV library");
-//        }
+/*        Log.d(TAG, "Load OpenCV Library");
+        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mOpenCVCallBack)) {
+            Log.e(TAG, "Failed to load OpenCV library");
+        }*/
 
-        Bitmap dbImgBitmap;
+        Bitmap dbImgBitmap = null;
         mDescriptorList = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             if (i == 0)
@@ -116,11 +123,11 @@ public class MainActivity extends AppCompatActivity {
             else if (i == 1)
                 dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.multimeter);
             else if (i == 2)
-                dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.function_gen);
+                dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.mixer1);
             else if (i == 3)
                 dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.keyboard);
             else if (i == 4)
-                dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.mouse);
+                dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.dsp);
             else
                 dbImgBitmap = null;
 
@@ -142,9 +149,12 @@ public class MainActivity extends AppCompatActivity {
             mDescriptorList.add(dbImgDesc);
         }
 
+        mHeight = dbImgBitmap.getHeight();
+        mWidth = dbImgBitmap.getWidth();
+
         mDescriptorMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_L1);
 
-//        mDescriptorMatcher.add(mDescriptorList);
+        mDescriptorMatcher.add(mDescriptorList);
 
         /** Creating Camera intent **/
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -164,6 +174,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         Log.d(TAG, "onResume");
         super.onResume();
+
+/*        Log.d(TAG, "Load OpenCV Library");
+        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mOpenCVCallBack)) {
+            Log.e(TAG, "Failed to load OpenCV library");
+        }*/
     }
 
     @Override
@@ -227,9 +242,14 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     // Get image bitmap
                     BitmapFactory.Options options = new BitmapFactory.Options();
+//                    options.outWidth = mWidth;
+//                    options.outHeight = mHeight;
 
                     //Bitmap is type ARGB_8888
                     Bitmap mBitmap = BitmapFactory.decodeStream(this.getContentResolver().openInputStream(fileUri), null, options);
+
+                    mBitmap = Bitmap.createScaledBitmap(mBitmap,mWidth,mHeight,false);
+//                    Bitmap mBitmap = bitmapHelper.decodeSampledBitmapFromResource(this.getContentResolver(),fileUri,mWidth,mHeight);
 
                     mMat = new Mat();
 
@@ -266,33 +286,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-
-//                    List<DMatch> matchList = imgMatches.toList();
-//                    float average = 0;
-//                    float min = matchList.get(0).distance;
-//                    float max = min;
-//                    for(int i = 0; i<matchList.size(); i++)
-//                    {
-//                        float dist = matchList.get(i).distance;
-//                        if(dist<min)
-//                            min = dist;
-//                        else if(dist>max)
-//                            max = dist;
-//                        average += dist;
-//                    }
-//                    average /= matchList.size();
-//                    int numGoodMatch = 0;
-//                    for(int i = 0; i<matchList.size(); i++)
-//                    {
-//                        if(matchList.get(i).distance < (min + 0.85*(average-min)))
-//                            numGoodMatch++;
-//                    }
-//                    List<KeyPoint> dbImgKeyList = dbKeypoints.toList();
-//                    List<KeyPoint> imgKeyList = mMatofKeyPoint.toList();
-//
-//                    double numDbKeys = (double)dbImgKeyList.size();
-//                    double numImgKeys = (double)imgKeyList.size();
-//
                     Mat imgMat = new Mat();
                     Bitmap dbImgBitmap = null;
                     String imageDescription = "The image is a ";
@@ -304,14 +297,14 @@ public class MainActivity extends AppCompatActivity {
                         dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.multimeter);
                         imageDescription += "multimeter";
                     } else if (2 == bestMatchIdx) {
-                        dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.function_gen);
-                        imageDescription += "function generator";
+                        dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.mixer1);
+                        imageDescription += "mixer";
                     } else if (3 == bestMatchIdx) {
                         dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.keyboard);
                         imageDescription += "keyboard";
                     } else if (4 == bestMatchIdx) {
-                        dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.mouse);
-                        imageDescription += "mouse";
+                        dbImgBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.dsp);
+                        imageDescription += "dsp";
                     }
 
                     Utils.bitmapToMat(dbImgBitmap, imgMat);
@@ -362,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
                     //Write Image to screen
                     mImageView.setImageBitmap(newBitmap);
 //                    mImageView.setImageBitmap(dbImgBitmap);
-
+//
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
